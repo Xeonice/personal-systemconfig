@@ -13,3 +13,7 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:
 git clone git://github.com/zsh-users/zsh-autosuggestions $ZSH_CUSTOM/plugins/zsh-autosuggestions
 echo "----------------拉取线上的.zshrc-------"
 wget --no-check-certificate -O ~/.zshrc https://raw.githubusercontent.com/Xeonice/personal-systemconfig/master/.zshrc?token=ADGILQTSBNX5SJ6A3KPH5JK6GOMZA
+echo "----------------安装nvm---------------"
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.2/install.sh | bash
+echo "----------------安装node--------------"
+nvm install node
