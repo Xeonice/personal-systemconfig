@@ -5,7 +5,7 @@ echo "----------------更新系统---------------"
 echo "----------------安装ZSH、git、wget-----"
 sudo apt-get install zsh git wget
 echo "----------------安装oh-my-zsh----------"
-# sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
 echo "----------------安装zsh插件------------"
 # syntax-highlighting
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
