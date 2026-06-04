@@ -46,7 +46,8 @@ personal-systemconfig/
 │   ├── macos.sh        # macOS 流程（brew + cask + hammerspoon）
 │   └── linux.sh        # Linux 流程（apt + 官方安装器 / release 包）
 ├── shell/
-│   └── zshrc           # 新版 .zshrc（zinit + agnoster + fnm），部署为 ~/.zshrc
+│   ├── zshrc           # 新版 .zshrc（zinit + powerlevel10k + fnm），部署为 ~/.zshrc
+│   └── p10k.zsh        # powerlevel10k 外观配置，部署为 ~/.p10k.zsh
 ├── test.sh             # 旧入口的兼容 shim，转交 install.sh
 └── README.md
 ```

@@ -85,7 +85,8 @@ esac
 echo
 log "部署 shell 配置"
 deploy_file "$REPO_DIR/shell/zshrc" "$HOME/.zshrc"
-info "首次启动 zsh 时，zinit 会自动克隆并安装所有插件"
+deploy_file "$REPO_DIR/shell/p10k.zsh" "$HOME/.p10k.zsh"
+info "首次启动 zsh 时，zinit 会自动克隆并安装所有插件（含 powerlevel10k 主题）"
 
 ensure_default_zsh
 

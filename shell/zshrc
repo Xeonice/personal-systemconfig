@@ -1,6 +1,15 @@
 # ~/.zshrc —— 跨平台（macOS / Linux），由 personal-systemconfig 管理
 # 插件管理：zinit（取代 oh-my-zsh + git clone）
+# 主题：powerlevel10k（取代 agnoster）
 # Node 版本管理：fnm（取代 nvm）
+
+# ---------------------------------------------------------------------------
+# powerlevel10k 即时提示（instant prompt）——须尽量靠近文件顶部。
+# 需要控制台输入的初始化（密码、[y/n] 确认等）必须放在此块之前。
+# ---------------------------------------------------------------------------
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
 
 # ---------------------------------------------------------------------------
 # 基础 PATH
@@ -29,13 +38,13 @@ fi
 source "$ZINIT_HOME/zinit.zsh"
 
 # ---------------------------------------------------------------------------
-# 主题：agnoster（通过 zinit 加载 oh-my-zsh 的库与主题文件）
-#   agnoster 需要 Powerline / Nerd 字体；kitty 配置已使用 JetBrains Mono
+# 主题：powerlevel10k（通过 zinit 加载）
+#   需要 Nerd 字体；kitty 配置已使用 JetBrains Mono Nerd Font
+#   外观细节由 ~/.p10k.zsh 控制（本仓库 shell/p10k.zsh 同步部署）
 # ---------------------------------------------------------------------------
 zinit snippet OMZL::git.zsh
-zinit snippet OMZL::theme-and-appearance.zsh
-ZSH_THEME="agnoster"
-zinit snippet OMZT::agnoster
+zinit ice depth=1
+zinit light romkatv/powerlevel10k
 
 # ---------------------------------------------------------------------------
 # 插件（迁移自原 plugins=(git z zsh-autosuggestions zsh-syntax-highlighting npm vscode)）
@@ -63,6 +72,12 @@ zinit light zsh-users/zsh-syntax-highlighting
 if command -v fnm >/dev/null 2>&1; then
   eval "$(fnm env --use-on-cd)"
 fi
+
+# ---------------------------------------------------------------------------
+# powerlevel10k 外观配置（由本仓库 shell/p10k.zsh 部署到 ~/.p10k.zsh）
+#   如需重新定制：运行 p10k configure 或直接编辑 ~/.p10k.zsh
+# ---------------------------------------------------------------------------
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # ---------------------------------------------------------------------------
 # 用户个性化配置（在此添加别名 / 环境变量）
