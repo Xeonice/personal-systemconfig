@@ -54,6 +54,16 @@ zinit snippet OMZP::z
 zinit snippet OMZP::npm
 zinit snippet OMZP::vscode
 
+# Oh My Zsh lib（补回迁移 zinit 后缺失的框架级体验）：
+#   completion.zsh   —— Tab 菜单选中高亮、大小写不敏感匹配、补全配色
+#   directories.zsh  —— 常用别名 ll / la / l / .. / ... / md / rd / d 等
+#   history.zsh      —— 多终端共享历史、去重、忽略空格开头命令、带时间戳
+#   key-bindings.zsh —— ↑↓ 按前缀搜索历史、Ctrl-R 反向搜索、Home/End/Delete
+zinit snippet OMZL::completion.zsh
+zinit snippet OMZL::directories.zsh
+zinit snippet OMZL::history.zsh
+zinit snippet OMZL::key-bindings.zsh
+
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-autosuggestions
 
