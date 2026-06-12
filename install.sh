@@ -26,10 +26,12 @@ ensure_xcode_clt() {
   # 临时标记文件让 softwareupdate 把 CLT 列入可安装项（Apple 官方认可的无人值守方式）
   local placeholder=/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
   touch "$placeholder"
-  local label
+  # 标签格式各版本不一：旧为 "...for Xcode-14.3"，Tahoe 为 "...for Xcode 26.5-26.5"，
+  # 用 awk 整行提取（无匹配时也返回 0，避免 set -e 把脚本杀掉）
+  local label=""
   label="$(softwareupdate -l 2>/dev/null \
-    | grep -o 'Label: Command Line Tools for Xcode-[0-9.]*' \
-    | sed 's/^Label: //' | sort -V | tail -1)"
+    | awk -F': ' '/\* Label: Command Line Tools for Xcode/ {print $2}' \
+    | sort -V | tail -1)" || true
   if [[ -n "$label" ]]; then
     sudo softwareupdate -i "$label" --verbose || true
   fi
