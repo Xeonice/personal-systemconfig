@@ -22,6 +22,9 @@ install_base_linux() {
   log "apt 更新并安装基础工具"
   as_root apt-get update -y
   apt_install zsh git wget curl ca-certificates gnupg
+  # kitty 配置（warp-style.conf）依赖 JetBrains Mono；老发行版无此包时仅告警
+  apt_install fonts-jetbrains-mono \
+    || warn "fonts-jetbrains-mono 安装失败（发行版可能无此包），kitty 将回退默认等宽字体"
 }
 
 # ---------------------------------------------------------------------------

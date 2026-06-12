@@ -90,6 +90,9 @@ run_macos() {
   # 仅 macOS
   brew_cask hammerspoon  "Hammerspoon.app"
 
+  # kitty 配置（warp-style.conf）依赖 JetBrains Mono，全新机器没有会回退 Menlo
+  brew_cask font-jetbrains-mono ""
+
   # 共用组件
   install_node_lts
   install_claude_code
