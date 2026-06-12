@@ -50,6 +50,8 @@ install_node_lts() {
 # Claude Code —— 官方原生安装器（macOS / Linux 通用）
 # ---------------------------------------------------------------------------
 install_claude_code() {
+  # claude 装在 ~/.local/bin，非登录 shell 的 PATH 可能没有，先补上避免误判重装
+  [[ -x "$HOME/.local/bin/claude" ]] && export PATH="$HOME/.local/bin:$PATH"
   if has claude; then ok "Claude Code 已安装：$(claude --version 2>/dev/null | head -1)"; return 0; fi
   log "安装 Claude Code"
   curl -fsSL https://claude.ai/install.sh | bash \

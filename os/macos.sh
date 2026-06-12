@@ -5,7 +5,19 @@
 # ---------------------------------------------------------------------------
 # Homebrew —— macOS 的包管理器（仅 Mac 安装；Linux 用 apt）
 # ---------------------------------------------------------------------------
+# 把 brew 注入当前 shell 环境（Apple Silicon 在 /opt/homebrew，Intel 在 /usr/local）
+brew_shellenv() {
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+}
+
 install_homebrew() {
+  # 先注入再检测：非登录 shell（ssh/管道）的 PATH 往往没有 brew，
+  # 否则已安装也会被误判而重跑整个 Homebrew 安装器
+  brew_shellenv
   if has brew; then
     ok "Homebrew 已安装：$(brew --version | head -1)"
   else
@@ -13,12 +25,7 @@ install_homebrew() {
     NONINTERACTIVE=1 /bin/bash -c \
       "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
       || die "Homebrew 安装失败"
-  fi
-  # 把 brew 注入当前 shell 环境（Apple Silicon 在 /opt/homebrew，Intel 在 /usr/local）
-  if [[ -x /opt/homebrew/bin/brew ]]; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-  elif [[ -x /usr/local/bin/brew ]]; then
-    eval "$(/usr/local/bin/brew shellenv)"
+    brew_shellenv
   fi
 }
 
