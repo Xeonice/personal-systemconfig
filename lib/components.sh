@@ -47,6 +47,37 @@ install_node_lts() {
 }
 
 # ---------------------------------------------------------------------------
+# powerline-go —— Go 实现的 powerline 提示符（个人配置的标准组件）
+#   macOS 走 brew；Linux 取 GitHub release 预编译二进制 → ~/.local/bin
+#   注意：powerline 字形依赖 Nerd 字体（由各平台安装流程负责安装）
+# ---------------------------------------------------------------------------
+install_powerline_go() {
+  if has powerline-go || [[ -x "$HOME/.local/bin/powerline-go" ]]; then
+    ok "powerline-go 已安装"
+    return 0
+  fi
+  log "安装 powerline-go"
+  if [[ "$(detect_os)" == macos ]] && has brew; then
+    brew install powerline-go || warn "powerline-go 安装失败，可稍后手动：brew install powerline-go"
+    return 0
+  fi
+  local arch_tok
+  case "$(detect_arch)" in
+    x86_64) arch_tok=amd64 ;;
+    arm64)  arch_tok=arm64 ;;
+    *) warn "powerline-go 无对应架构预编译包（$(detect_arch)），跳过"; return 0 ;;
+  esac
+  local url="https://github.com/justjanne/powerline-go/releases/latest/download/powerline-go-linux-${arch_tok}"
+  mkdir -p "$HOME/.local/bin"
+  if download "$url" "$HOME/.local/bin/powerline-go"; then
+    chmod +x "$HOME/.local/bin/powerline-go"
+    ok "powerline-go 安装完成：$HOME/.local/bin/powerline-go"
+  else
+    warn "powerline-go 下载失败，可稍后手动安装：https://github.com/justjanne/powerline-go/releases"
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # Claude Code —— 官方原生安装器（macOS / Linux 通用）
 # ---------------------------------------------------------------------------
 install_claude_code() {

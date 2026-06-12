@@ -28,6 +28,33 @@ install_base_linux() {
 }
 
 # ---------------------------------------------------------------------------
+# JetBrains Mono Nerd Font —— powerline-go / p10k 的 powerline 与图标字形依赖
+#   apt 无 Nerd 字体包，从 nerd-fonts 官方 release 取 tar.xz 装到 ~/.local/share/fonts
+# ---------------------------------------------------------------------------
+install_nerd_font_linux() {
+  local font_dir="$HOME/.local/share/fonts/JetBrainsMonoNerd"
+  if compgen -G "$font_dir/*.ttf" >/dev/null 2>&1; then
+    ok "JetBrains Mono Nerd Font 已安装"
+    return 0
+  fi
+  log "安装 JetBrains Mono Nerd Font（nerd-fonts release）"
+  local tarball
+  tarball="$(mktemp /tmp/jbmono-nerd.XXXXXX.tar.xz)"
+  if download "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz" "$tarball"; then
+    mkdir -p "$font_dir"
+    if tar -xJf "$tarball" -C "$font_dir" 2>/dev/null; then
+      has fc-cache && fc-cache -f "$font_dir" >/dev/null 2>&1
+      ok "Nerd Font 安装完成：$font_dir"
+    else
+      warn "Nerd Font 解压失败（需要 xz 支持），跳过"
+    fi
+    rm -f "$tarball"
+  else
+    warn "Nerd Font 下载失败，可稍后手动：https://www.nerdfonts.com/font-downloads"
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # kitty —— 官方安装器装到 ~/.local（apt 版本通常过旧）
 # ---------------------------------------------------------------------------
 install_kitty_linux() {
@@ -111,7 +138,8 @@ install_switchhosts_linux() {
 run_linux() {
   log "===== Linux 安装流程开始 ====="
 
-  install_base_linux        # zsh git wget curl（两边都装）
+  install_base_linux        # zsh git wget curl + JetBrains Mono（两边都装）
+  install_nerd_font_linux   # Nerd 字体（powerline-go / p10k 字形依赖）
   install_fnm               # fnm（两边都装）
 
   install_kitty_linux       # kitty（两边都装）
@@ -120,6 +148,7 @@ run_linux() {
   # 注意：hammerspoon / brew 仅 macOS，不在此安装
 
   install_node_lts
+  install_powerline_go
   install_claude_code
   install_kitty_config
 

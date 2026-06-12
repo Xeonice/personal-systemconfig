@@ -90,11 +90,15 @@ run_macos() {
   # 仅 macOS
   brew_cask hammerspoon  "Hammerspoon.app"
 
-  # kitty 配置（warp-style.conf）依赖 JetBrains Mono，全新机器没有会回退 Menlo
+  # 字体依赖（全新机器没有会回退 Menlo / 图标显示为方块）：
+  #   - font-jetbrains-mono：kitty warp-style.conf 引用的 "JetBrains Mono" 字族
+  #   - font-jetbrains-mono-nerd-font：powerline-go / p10k 的 powerline 与图标字形
   brew_cask font-jetbrains-mono ""
+  brew_cask font-jetbrains-mono-nerd-font ""
 
   # 共用组件
   install_node_lts
+  install_powerline_go
   install_claude_code
   install_kitty_config
 
