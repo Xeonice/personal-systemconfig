@@ -12,6 +12,38 @@ REPO_URL="https://github.com/Xeonice/personal-systemconfig.git"
 REPO_HOME="$HOME/.personal-systemconfig"
 
 # ---------------------------------------------------------------------------
+# Xcode Command Line Tools（仅 macOS）
+# 全新 macOS 上 /usr/bin/git 只是个会弹 GUI 安装框的桩：`command -v git` 能通过、
+# 但 `git clone` 直接失败。因此必须在任何 git 操作之前确保 CLT 真实存在。
+# 此函数自包含（不依赖 lib/），远程管道引导时也可用。
+# ---------------------------------------------------------------------------
+ensure_xcode_clt() {
+  [[ "$(uname -s)" == Darwin ]] || return 0
+  if xcode-select -p >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "==> 安装 Xcode Command Line Tools（首次需要几分钟，请勿中断）"
+  # 临时标记文件让 softwareupdate 把 CLT 列入可安装项（Apple 官方认可的无人值守方式）
+  local placeholder=/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress
+  touch "$placeholder"
+  local label
+  label="$(softwareupdate -l 2>/dev/null \
+    | grep -o 'Label: Command Line Tools for Xcode-[0-9.]*' \
+    | sed 's/^Label: //' | sort -V | tail -1)"
+  if [[ -n "$label" ]]; then
+    sudo softwareupdate -i "$label" --verbose || true
+  fi
+  rm -f "$placeholder"
+  # 无人值守失败则回退到 GUI 安装器，等待用户在对话框中完成
+  if ! xcode-select -p >/dev/null 2>&1; then
+    xcode-select --install 2>/dev/null || true
+    echo "    已弹出 Command Line Tools 安装对话框，请完成安装（脚本会自动继续）……"
+    until xcode-select -p >/dev/null 2>&1; do sleep 5; done
+  fi
+  echo "    Command Line Tools 就绪：$(xcode-select -p)"
+}
+
+# ---------------------------------------------------------------------------
 # 定位脚本所在目录；若是被 curl 管道执行（无本地文件），先克隆仓库再 re-exec
 # ---------------------------------------------------------------------------
 # 直接给全局 REPO_DIR 赋值，避免用命令替换捕获——否则 git pull/clone 的 stdout
@@ -25,6 +57,8 @@ resolve_repo_dir() {
     return 0
   fi
   # 远程管道运行：克隆 / 更新到 REPO_HOME 后由调用方 re-exec
+  # 全新 macOS 上 git 桩会在 clone 时弹 GUI 并失败，先确保 CLT 真实可用
+  ensure_xcode_clt
   if [[ -d "$REPO_HOME/.git" ]]; then
     if ! git -C "$REPO_HOME" pull --ff-only; then
       echo "⚠ 仓库更新失败（非快进/有本地改动），将使用 $REPO_HOME 中已有的缓存版本继续。" >&2

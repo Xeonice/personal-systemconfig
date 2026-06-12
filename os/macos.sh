@@ -64,6 +64,9 @@ install_hammerspoon_config() {
 run_macos() {
   log "===== macOS 安装流程开始 ====="
 
+  # 本地克隆运行路径下也确保 CLT（远程引导路径已在 install.sh 中处理，幂等）
+  ensure_xcode_clt
+
   install_homebrew
 
   # 基础工具（两边都装）
