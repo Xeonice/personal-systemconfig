@@ -126,6 +126,10 @@ ensure_default_zsh() {
   fi
   if chsh -s "$zsh_path" 2>/dev/null; then
     ok "默认 shell 已切换为 zsh（重新登录后生效）"
+  # chsh 需要在 tty 上交互输密码，管道/无人值守场景会失败；
+  # 回退用 root 执行（此时 sudo 时间戳通常仍有效，无需再输密码）
+  elif has sudo && as_root chsh -s "$zsh_path" "$(id -un)" 2>/dev/null; then
+    ok "默认 shell 已切换为 zsh（重新登录后生效）"
   else
     warn "chsh 失败，请手动执行：chsh -s $zsh_path"
   fi
