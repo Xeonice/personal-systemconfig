@@ -21,7 +21,9 @@ install_base_linux() {
   fi
   log "apt 更新并安装基础工具"
   as_root apt-get update -y
-  apt_install zsh git wget curl ca-certificates gnupg
+  # unzip：fnm 官方安装脚本的硬依赖（缺了会直接放弃安装 → 连带 Node 装不上）
+  # xz-utils：解压 Nerd 字体 tar.xz（多数镜像自带，精简镜像可能缺）
+  apt_install zsh git wget curl ca-certificates gnupg unzip xz-utils
   # kitty 配置（warp-style.conf）依赖 JetBrains Mono；老发行版无此包时仅告警
   apt_install fonts-jetbrains-mono \
     || warn "fonts-jetbrains-mono 安装失败（发行版可能无此包），kitty 将回退默认等宽字体"
