@@ -135,6 +135,76 @@ install_switchhosts_linux() {
 }
 
 # ---------------------------------------------------------------------------
+# 1Password —— 官方 .deb
+#   官方 Linux 桌面版只发 amd64，arm64 会 404，需提前挡掉
+# ---------------------------------------------------------------------------
+install_1password_linux() {
+  if has 1password; then ok "1Password 已安装"; return 0; fi
+  if [[ "$(detect_arch)" != x86_64 ]]; then
+    warn "1Password Linux 桌面版仅提供 amd64，当前架构 $(detect_arch)，跳过"
+    return 0
+  fi
+  log "安装 1Password（官方 .deb）"
+  local deb; deb="$(mktemp /tmp/1password.XXXXXX.deb)"
+  if download "https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb" "$deb"; then
+    as_root apt-get install -y "$deb" || warn "1Password 安装失败"
+    rm -f "$deb"
+  else
+    warn "1Password 下载失败，跳过"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Tailscale —— 官方安装脚本（自行识别发行版并配置 apt 源）
+# ---------------------------------------------------------------------------
+install_tailscale_linux() {
+  if has tailscale; then ok "Tailscale 已安装：$(tailscale version 2>/dev/null | head -1)"; return 0; fi
+  log "安装 Tailscale（官方安装脚本）"
+  curl -fsSL https://tailscale.com/install.sh | sh \
+    || { warn "Tailscale 安装失败，可稍后手动：curl -fsSL https://tailscale.com/install.sh | sh"; return 0; }
+  info "装好后执行 sudo tailscale up 登录并加入网络"
+}
+
+# ---------------------------------------------------------------------------
+# Codex CLI —— GitHub release 的 musl 静态二进制装到 ~/.local/bin
+#   macOS 侧走 brew cask；Linux 无 cask，按 powerline-go 的路子取 release。
+#   走 musl 版以免踩各发行版 glibc 版本差异。
+# ---------------------------------------------------------------------------
+install_codex_linux() {
+  if has codex; then ok "Codex 已安装：$(codex --version 2>/dev/null | head -1)"; return 0; fi
+  local arch_tok
+  case "$(detect_arch)" in
+    x86_64) arch_tok=x86_64 ;;
+    arm64)  arch_tok=aarch64 ;;
+    *) warn "Codex 无对应架构的 release（$(detect_arch)），跳过"; return 0 ;;
+  esac
+  log "安装 Codex CLI（GitHub release）"
+  local url="https://github.com/openai/codex/releases/latest/download/codex-${arch_tok}-unknown-linux-musl.tar.gz"
+  local tarball; tarball="$(mktemp /tmp/codex.XXXXXX.tar.gz)"
+  if ! download "$url" "$tarball"; then
+    warn "Codex 下载失败，可稍后手动：https://github.com/openai/codex/releases"
+    rm -f "$tarball"
+    return 0
+  fi
+  local tmpdir; tmpdir="$(mktemp -d /tmp/codex-x.XXXXXX)"
+  if tar -xzf "$tarball" -C "$tmpdir" 2>/dev/null; then
+    # 包内二进制名带三元组后缀（codex-x86_64-unknown-linux-musl），取出后统一改名为 codex
+    local bin
+    bin="$(find "$tmpdir" -type f -name 'codex*' -perm -u+x 2>/dev/null | head -1)"
+    if [[ -n "$bin" ]]; then
+      mkdir -p "$HOME/.local/bin"
+      install -m 0755 "$bin" "$HOME/.local/bin/codex"
+      ok "Codex 安装完成：$HOME/.local/bin/codex"
+    else
+      warn "Codex 压缩包内未找到可执行文件，跳过"
+    fi
+  else
+    warn "Codex 解压失败，跳过"
+  fi
+  rm -rf "$tarball" "$tmpdir"
+}
+
+# ---------------------------------------------------------------------------
 # 主流程
 # ---------------------------------------------------------------------------
 run_linux() {
@@ -144,10 +214,24 @@ run_linux() {
   install_nerd_font_linux   # Nerd 字体（powerline-go / p10k 字形依赖）
   install_fnm               # fnm（两边都装）
 
-  install_kitty_linux       # kitty（两边都装）
-  install_chrome_linux      # chrome（两边都装）
-  install_switchhosts_linux # switchhosts（两边都装）
-  # 注意：hammerspoon / brew 仅 macOS，不在此安装
+  # ---- 可选软件：先一次性问完，再统一安装，中途不打断 ----
+  # 注意：Raycast 是 macOS 专有，Linux 没有对应版本，故不在此登记；
+  #       hammerspoon / brew 同理仅 macOS。
+  optional_reset
+  optional_add kitty       "kitty 终端"    'has kitty'
+  optional_add chrome      "Google Chrome" 'has google-chrome || has google-chrome-stable'
+  optional_add switchhosts "SwitchHosts"   'has switchhosts || has SwitchHosts'
+  optional_add onepassword "1Password"     'has 1password'
+  optional_add tailscale   "Tailscale"     'has tailscale'
+  optional_add codex       "Codex CLI"     'has codex'
+  optional_select
+
+  optional_run kitty       install_kitty_linux
+  optional_run chrome      install_chrome_linux
+  optional_run switchhosts install_switchhosts_linux
+  optional_run onepassword install_1password_linux
+  optional_run tailscale   install_tailscale_linux
+  optional_run codex       install_codex_linux
 
   install_node_lts
   install_powerline_go

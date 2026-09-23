@@ -82,19 +82,39 @@ run_macos() {
   brew_install wget
   brew_install fnm
 
-  # 跨平台 GUI / CLI 应用（两边都装）
-  brew_cask kitty        "kitty.app"
-  brew_cask google-chrome "Google Chrome.app"
-  brew_cask switchhosts  "SwitchHosts.app"
-
-  # 仅 macOS
-  brew_cask hammerspoon  "Hammerspoon.app"
-
   # 字体依赖（全新机器没有会回退 Menlo / 图标显示为方块）：
   #   - font-jetbrains-mono：kitty warp-style.conf 引用的 "JetBrains Mono" 字族
   #   - font-jetbrains-mono-nerd-font：powerline-go / p10k 的 powerline 与图标字形
   brew_cask font-jetbrains-mono ""
   brew_cask font-jetbrains-mono-nerd-font ""
+
+  # ---- 可选软件：先一次性问完，再统一安装，中途不打断 ----
+  # 检测式尽量贴近"用户眼里装没装"：看 App 是否在 /Applications，
+  # 纯 CLI 的看命令能否找到（此时 brew_shellenv 已注入过 PATH）。
+  # 不查 brew cask 列表，这样手动装的 App 同样会被认作已安装。
+  optional_reset
+  optional_add kitty       "kitty 终端"        '[[ -d /Applications/kitty.app ]]'
+  optional_add chrome      "Google Chrome"     '[[ -d "/Applications/Google Chrome.app" ]]'
+  optional_add switchhosts "SwitchHosts"       '[[ -d /Applications/SwitchHosts.app ]]'
+  optional_add hammerspoon "Hammerspoon"       '[[ -d /Applications/Hammerspoon.app ]]'
+  optional_add raycast     "Raycast"           '[[ -d /Applications/Raycast.app ]]'
+  optional_add onepassword "1Password"         '[[ -d /Applications/1Password.app ]]'
+  # tailscale 在 macOS 上有两种装法：cask 的 GUI App，或 formula 的纯 CLI。
+  # 任一存在即视作已装，避免给已经用 formula 版的机器重复装一个 App。
+  optional_add tailscale   "Tailscale"         '[[ -d /Applications/Tailscale.app ]] || has tailscale'
+  # codex cask 交付的是 bin/codex 二进制，不是 .app，只能查命令
+  optional_add codex       "Codex CLI"         'has codex'
+  optional_select
+
+  optional_run kitty       brew_cask kitty          "kitty.app"
+  optional_run chrome      brew_cask google-chrome  "Google Chrome.app"
+  optional_run switchhosts brew_cask switchhosts    "SwitchHosts.app"
+  optional_run hammerspoon brew_cask hammerspoon    "Hammerspoon.app"
+  optional_run raycast     brew_cask raycast        "Raycast.app"
+  optional_run onepassword brew_cask 1password      "1Password.app"
+  # cask 名是 tailscale-app；tailscale 只是它的旧别名
+  optional_run tailscale   brew_cask tailscale-app  "Tailscale.app"
+  optional_run codex       brew_cask codex          ""
 
   # 共用组件
   install_node_lts
@@ -102,8 +122,13 @@ run_macos() {
   install_claude_code
   install_kitty_config
 
-  # 依赖 kitty-config 已克隆
-  install_hammerspoon_config
+  # 依赖 kitty-config 已克隆。用 is_active 而非 is_selected：
+  # 早就装了 Hammerspoon 的机器不会出现在选单里，配置照样要铺。
+  if optional_is_active hammerspoon; then
+    install_hammerspoon_config
+  else
+    info "未安装 Hammerspoon，跳过其配置部署"
+  fi
 
   log "===== macOS 安装流程结束 ====="
 }

@@ -102,6 +102,132 @@ download() {
   fi
 }
 
+# ---------------------------------------------------------------------------
+# 可选软件选单
+#   optional_reset                      清空清单
+#   optional_add <key> <名称> <检测式>  登记一项；检测式退出码为 0 视作已安装
+#   optional_select                     已装的直接跳过，其余列出来让用户勾选
+#   optional_run  <key> <命令…>         仅当该项被选中时执行
+#
+# 设计：所有询问集中在安装动作之前一次问完，中途不再打断。
+# 已安装的项不进选单（不问已经装好的东西）；无 tty 时默认全装，
+# 保证 CI / 无人值守场景的行为与引入选单之前一致。
+#
+# 两个 bash 3.2（macOS 自带）限制，改动时勿踩：
+#   1. 没有关联数组 —— 清单用 "key|名称|检测式" 三段式字符串数组承载；
+#   2. set -u 下空数组展开报 unbound —— 必须写 ${a[@]+"${a[@]}"}。
+# ---------------------------------------------------------------------------
+OPTIONAL_SPECS=()
+OPTIONAL_SELECTED=""   # 本次选中要装的，形如 " kitty raycast "，两端留空格便于整词匹配
+OPTIONAL_PRESENT=""    # 选取前就已经装好的，格式同上
+
+optional_reset() { OPTIONAL_SPECS=(); OPTIONAL_SELECTED=""; OPTIONAL_PRESENT=""; }
+
+optional_add() { OPTIONAL_SPECS+=("$1|$2|$3"); }
+
+# 本次选中要装
+optional_is_selected() { [[ "$OPTIONAL_SELECTED" == *" $1 "* ]]; }
+
+# 装完这一轮之后机器上会有它（本来就装了，或本次选中）。
+# 配置部署类的动作要用它而不是 optional_is_selected：
+# 早就装好的软件不会进选单，却同样需要把配置铺上去。
+optional_is_active() {
+  [[ "$OPTIONAL_PRESENT" == *" $1 "* ]] || [[ "$OPTIONAL_SELECTED" == *" $1 "* ]]
+}
+
+# 仅当 key 被选中时执行后续命令。
+# 注意用 if 而非 "cond && cmd"：后者在未选中时整条返回非零，会被 set -e 杀掉。
+optional_run() {
+  local key="$1"; shift
+  if optional_is_selected "$key"; then "$@"; fi
+}
+
+# 用顿号连接多个名称，供提示语使用
+_join_cn() {
+  local out="" x
+  for x in "$@"; do out="${out}${out:+、}${x}"; done
+  printf '%s' "$out"
+}
+
+optional_select() {
+  local spec key name detect i
+  local pend_keys=() pend_names=() done_names=()
+
+  for spec in ${OPTIONAL_SPECS[@]+"${OPTIONAL_SPECS[@]}"}; do
+    IFS='|' read -r key name detect <<<"$spec"
+    if eval "$detect" >/dev/null 2>&1; then
+      done_names+=("$name")
+      OPTIONAL_PRESENT="${OPTIONAL_PRESENT} ${key} "
+    else
+      pend_keys+=("$key")
+      pend_names+=("$name")
+    fi
+  done
+
+  OPTIONAL_SELECTED=" "
+
+  if [[ ${#done_names[@]} -gt 0 ]]; then
+    ok "已安装，跳过选取：$(_join_cn ${done_names[@]+"${done_names[@]}"})"
+  fi
+
+  local total=${#pend_keys[@]}
+  if [[ "$total" -eq 0 ]]; then
+    ok "可选软件均已安装，无需选取"
+    return 0
+  fi
+
+  echo
+  log "可选软件（${total} 项未安装）"
+  for ((i = 0; i < total; i++)); do
+    printf '    %2d) %s\n' "$((i + 1))" "${pend_names[$i]}"
+  done
+
+  # 无 tty：不阻塞，全装
+  if [[ ! -t 0 ]]; then
+    info "非交互终端，默认全部安装"
+    for ((i = 0; i < total; i++)); do OPTIONAL_SELECTED="${OPTIONAL_SELECTED}${pend_keys[$i]} "; done
+    return 0
+  fi
+
+  info "回车=全装，n=都不装，或输入编号（如 1 3 5 或 1,3,5）"
+  local reply=""
+  printf '    请选择> '
+  # set -e 下 read 读到 EOF 会返回非零直接终止脚本，须兜住
+  read -r reply || reply=""
+
+  reply="$(printf '%s' "$reply" | tr 'A-Z' 'a-z' | tr ',' ' ')"
+  case "$reply" in
+    ""|" "|a|all|y|yes)
+      for ((i = 0; i < total; i++)); do OPTIONAL_SELECTED="${OPTIONAL_SELECTED}${pend_keys[$i]} "; done
+      ok "将安装全部 ${total} 项"
+      return 0
+      ;;
+    n|no|none|0|q)
+      warn "跳过全部可选软件"
+      return 0
+      ;;
+  esac
+
+  local tok picked=0
+  for tok in $reply; do
+    if [[ "$tok" =~ ^[0-9]+$ ]] && [[ "$tok" -ge 1 ]] && [[ "$tok" -le "$total" ]]; then
+      key="${pend_keys[$((tok - 1))]}"
+      if [[ "$OPTIONAL_SELECTED" != *" $key "* ]]; then
+        OPTIONAL_SELECTED="${OPTIONAL_SELECTED}${key} "
+        picked=$((picked + 1))
+      fi
+    else
+      warn "忽略无效输入：${tok}"
+    fi
+  done
+
+  if [[ "$picked" -eq 0 ]]; then
+    warn "未选中任何有效项，跳过全部可选软件"
+  else
+    ok "已选中 ${picked} 项"
+  fi
+}
+
 # 把 zsh 设为默认 shell（幂等）
 ensure_default_zsh() {
   local zsh_path

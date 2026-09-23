@@ -18,21 +18,48 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Xeonice/personal-systemc
 
 ## 安装内容
 
+### 必装（骨架，不询问）
+
 | 组件 | Linux | macOS | 安装方式 |
 |------|:----:|:----:|------|
 | zsh / git / wget / curl | ✅ | ✅ | Linux: apt ・ macOS: brew |
 | **zinit**（插件管理，取代 oh-my-zsh） | ✅ | ✅ | 由 `.zshrc` 首次启动时自动克隆 |
 | **fnm**（Node 版本管理，取代 nvm） | ✅ | ✅ | Linux: 官方脚本 ・ macOS: brew |
 | Node LTS | ✅ | ✅ | `fnm install --lts` |
-| kitty | ✅ | ✅ | Linux: 官方安装器 ・ macOS: brew cask |
+| JetBrains Mono / Nerd Font | ✅ | ✅ | Linux: apt + nerd-fonts release ・ macOS: brew cask |
 | kitty 配置 | ✅ | ✅ | clone [Xeonice/kitty-config](https://github.com/Xeonice/kitty-config) → `~/.config/kitty` |
-| Google Chrome | ✅ | ✅ | Linux: 官方 .deb ・ macOS: brew cask |
 | Claude Code | ✅ | ✅ | `curl -fsSL https://claude.ai/install.sh \| bash` |
-| SwitchHosts | ✅ | ✅ | Linux: GitHub release .deb ・ macOS: brew cask |
 | **Homebrew** | ❌ | ✅ | macOS 包管理器（Linux 用 apt） |
-| **Hammerspoon** | ❌ | ✅ | brew cask；配置取自 kitty-config（Option + / 唤起 kitty） |
 
-> 「两边都有的装两边，仅某平台有的只装那边」：Homebrew、Hammerspoon 为 macOS 专属，其余跨平台组件两个分支都装。
+### 可选（安装前交互勾选）
+
+已经装过的不会出现在选单里，直接跳过；一次问完，之后不再打断。
+
+| 组件 | Linux | macOS | 安装方式 |
+|------|:----:|:----:|------|
+| kitty | ✅ | ✅ | Linux: 官方安装器 ・ macOS: brew cask |
+| Google Chrome | ✅ | ✅ | Linux: 官方 .deb ・ macOS: brew cask |
+| SwitchHosts | ✅ | ✅ | Linux: GitHub release .deb ・ macOS: brew cask |
+| **1Password** | ✅ | ✅ | Linux: 官方 .deb（仅 amd64）・ macOS: brew cask |
+| **Tailscale** | ✅ | ✅ | Linux: 官方 install.sh ・ macOS: brew cask `tailscale-app` |
+| **Codex CLI** | ✅ | ✅ | Linux: GitHub release musl 二进制 ・ macOS: brew cask |
+| **Hammerspoon** | ❌ | ✅ | brew cask；配置取自 kitty-config（Option + / 唤起 kitty） |
+| **Raycast** | ❌ | ✅ | brew cask（macOS 专有，无 Linux 版） |
+
+> 「两边都有的装两边，仅某平台有的只装那边」：Homebrew、Hammerspoon、Raycast 为 macOS 专属，其余跨平台组件两个分支都装。
+
+选单交互：
+
+```
+==> 可选软件（3 项未安装）
+     1) SwitchHosts
+     2) Raycast
+     3) Tailscale
+    回车=全装，n=都不装，或输入编号（如 1 3 5 或 1,3,5）
+    请选择>
+```
+
+无 tty（CI / 无人值守）时不阻塞，默认全部安装，行为与引入选单之前一致。
 
 ## 仓库结构
 
@@ -56,7 +83,8 @@ personal-systemconfig/
 
 - **幂等**：所有步骤先检测再安装，可重复运行。
 - **跨平台**：`.zshrc` 同一份兼容 macOS / Linux，自动处理 Homebrew shellenv、fnm 路径。
-- **非交互**：Homebrew 安装走 `NONINTERACTIVE=1`，适合自动化。
+- **非交互**：Homebrew 安装走 `NONINTERACTIVE=1`，适合自动化；可选软件选单在无 tty 时自动全选，不会卡住。
+- **先问后装**：所有询问集中在安装动作之前一次问完，装的过程中不再打断。
 - **安全备份**：部署 `~/.zshrc`、`~/.hammerspoon/init.lua` 等前会自动备份旧文件为 `*.bak`。
 
 ## 备注
@@ -64,3 +92,6 @@ personal-systemconfig/
 - macOS 上 Hammerspoon 首次使用需在「系统设置 → 隐私与安全性 → 辅助功能」中手动授权。
 - Linux 目前仅适配 Debian / Ubuntu（apt）系；其它发行版会跳过 apt 步骤并给出提示。
 - Google Chrome 官方 .deb 仅提供 x86_64，ARM Linux 会自动跳过。
+- 1Password Linux 桌面版官方仅提供 amd64，ARM Linux 会自动跳过。
+- Raycast 为 macOS 专有，Linux 分支不提供，也不会出现在选单中。
+- macOS 上 Tailscale 装的是 cask `tailscale-app`（GUI）；若机器上已有 formula 版的 `tailscale` CLI，会被认作已安装而跳过。
