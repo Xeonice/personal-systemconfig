@@ -70,7 +70,7 @@ backup_path() {
   local bak="${target}.bak"
   local n=1
   while [[ -e "$bak" ]]; do bak="${target}.bak.${n}"; n=$((n + 1)); done
-  warn "已存在 $target，备份到 $bak"
+  warn "已存在 ${target}，备份到 ${bak}"
   mv "$target" "$bak"
 }
 

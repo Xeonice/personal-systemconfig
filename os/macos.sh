@@ -57,7 +57,7 @@ brew_cask() {
 install_hammerspoon_config() {
   local src="$KITTY_CONFIG_DIR/hammerspoon-init.lua"
   if [[ ! -f "$src" ]]; then
-    warn "未找到 $src（kitty-config 可能未克隆成功），跳过 Hammerspoon 配置"
+    warn "未找到 ${src}（kitty-config 可能未克隆成功），跳过 Hammerspoon 配置"
     return 0
   fi
   deploy_file "$src" "$HOME/.hammerspoon/init.lua"

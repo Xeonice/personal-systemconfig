@@ -93,7 +93,7 @@ install_claude_code() {
 # kitty 配置 —— clone Xeonice/kitty-config 到 ~/.config/kitty
 # ---------------------------------------------------------------------------
 install_kitty_config() {
-  log "部署 kitty 配置（$KITTY_CONFIG_REPO）"
+  log "部署 kitty 配置（${KITTY_CONFIG_REPO}）"
   local origin=""
   if [[ -d "$KITTY_CONFIG_DIR/.git" ]]; then
     origin="$(git -C "$KITTY_CONFIG_DIR" remote get-url origin 2>/dev/null || true)"
