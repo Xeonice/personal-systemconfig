@@ -109,5 +109,10 @@ install_kitty_config() {
     git clone --depth 1 "$KITTY_CONFIG_REPO" "$KITTY_CONFIG_DIR" \
       || { warn "克隆 kitty-config 失败"; return 0; }
   fi
+  # kitty.conf 里 vibe-island 那段把 listen_on 指到 ~/.vibe-island/run/。
+  # kitty 在该目录不存在时无法 bind unix socket，启动即报
+  #   Invalid listen_on=unix:/…/.vibe-island/run/kitty-<pid>, ignoring
+  # 并停在错误页等按键。未装 vibe-island 的机器上也先建好，保证 kitty 干净启动。
+  mkdir -p "$HOME/.vibe-island/run"
   ok "kitty 配置就绪：$KITTY_CONFIG_DIR"
 }
